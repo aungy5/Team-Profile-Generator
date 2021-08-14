@@ -7,7 +7,11 @@ const Engineer = require("./lib/Engineer");
 const Manager = require("./lib/Manager");
 const Intern = require("./lib/Intern");
 
-const writeFileAsync = util.promisify(fs.writeFile);
+//const writeFileAsync = util.promisify(fs.writeFile);
+
+const filePathForHTML = "./dist/index.html"
+
+const myTeam = [];
 
 const promptManager = () => {
   return inquirer.prompt([
@@ -35,59 +39,75 @@ const promptManager = () => {
       type: 'list',
       name: 'add',
       message: "Would you like to add another employee to your team?",
-      choices: ['Yes','No']
-    },
-    {
-      type: 'list',
-      name: 'addType',
-      message: "What type of employee would you like to add",
-      choices: ['Engineer','Intern'],
-      when: (answers) => answers.add === "Yes"
+      choices: ['Engineer','Intern']
     }
-  ]);
+  ]).then(answers => {
+    let manager = new Manager(answers.name, answers.id, answers.email, answers.office)
+    myTeam.push(manager);
+    if (answers.add === "Engineer") {
+      promptEngineer();
+    } 
+    else if (answers.add === "Intern") {
+      promptIntern();
+    }
+    else {
+      generateHTML();
+    }
+  })
+  .catch(err => {
+    if (err) {
+      console.log(err)
+    }
+  })
 };
+promptManager();
 
 const promptIntern = () => {
   return inquirer.prompt([
     {
       type: 'input',
-      name: 'InternName',
+      name: 'internName',
       message: "What is the intern's name?"
     },
     {
       type: 'input',
-      name: 'InternId',
+      name: 'internID',
       message: "What is the intern's employeeID?"
     },
     {
       type: 'input',
-      name: 'InternEmail',
+      name: 'internEmail',
       message: "What is the intern's email?"
     },
     {
       type: 'input',
-      name: 'InternOffice',
-      message: "What is the intern's office number?"
-    },
-    {
-      type: 'input',
-      name: 'InternSchool',
+      name: 'internSchool',
       message: "What is the intern's current school?"
     },
     {
       type: 'list',
       name: 'add',
       message: "Would you like to add another employee to your team?",
-      choices: ['Yes','No']
-    },
-    {
-      type: 'list',
-      name: 'addType',
-      message: "What type of employee would you like to add",
-      choices: ['Engineer','Intern'],
-      when: (answers) => answers.add === "Yes"
+      choices: ['Engineer','Intern','None']
     }
-  ]);
+  ]).then(answers => {
+    let intern = new Intern(answers.internName, answers.internID, answers.internEmail, answers.internSchool)
+    myTeam.push(intern);
+    if (answers.add === "Engineer") {
+      promptEngineer();
+    } 
+    else if (answers.add === "Intern") {
+      promptIntern();
+    }
+    else {
+      generateHTML();
+    }
+  })
+  .catch(err => {
+    if (err) {
+      console.log(err)
+    }
+  })
 };
 
 const promptEngineer = () => {
@@ -99,18 +119,13 @@ const promptEngineer = () => {
     },
     {
       type: 'input',
-      name: 'EngineerId',
+      name: 'EngineerID',
       message: "What is the Engineer's employeeID?"
     },
     {
       type: 'input',
       name: 'EngineerEmail',
       message: "What is the Engineer's email?"
-    },
-    {
-      type: 'input',
-      name: 'EngineerOffice',
-      message: "What is the Engineer's office number?"
     },
     {
       type: 'input',
@@ -121,103 +136,83 @@ const promptEngineer = () => {
       type: 'list',
       name: 'add',
       message: "Would you like to add another employee to your team?",
-      choices: ['Yes','No']
-    },
-    {
-      type: 'list',
-      name: 'addType',
-      message: "What type of employee would you like to add",
-      choices: ['Engineer','Intern'],
-      when: (answers) => answers.add === "Yes"
+      choices: ['Engineer','Intern','None']
     }
-  ]);
+  ]).then(answers => {
+    let engineer = new Engineer(answers.EngineerName, answers.EngineerID, answers.EngineerEmail, answers.EngineerGithub)
+    myTeam.push(engineer);
+    if (answers.add === "Engineer") {
+      promptEngineer();
+    } 
+    else if (answers.add === "Intern") {
+      promptIntern();
+    }
+    else {
+      generateHTML();
+    }
+  })
+  .catch(err => {
+    if (err) {
+      console.log(err)
+    }
+  })
 };
 
-const addAnother = (answers) => {
-  if (answers.addType === "Engineer")
-  promptEngineer();
-  if (answers.addType === "Intern")
-  promptIntern();
+function generateStarterHTML() {
+  return `<!doctype html>
+  <html lang="en">
+    <head>
+      <!-- Required meta tags -->
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  
+      <!-- Bootstrap CSS -->
+      <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
+      <!-- myCSS -->
+      <link rel="stylesheet" href="./style.css">
+  
+      <title>Team Profile Generator</title>
+    </head>
+    <body>
+      <header>
+      <div class="p-5 text-center bg-red">
+          <h1 class="mb-3">Team Profile Generator</h1>
+      </div>
+      </header>
+  
+      <div class="col-sm-12 text-center" id="teamcards">`
 }
 
-const generateHTML = (answers) => `<!doctype html>
-<html lang="en">
-  <head>
-    <!-- Required meta tags -->
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+function generateMyTeamHTML(myTeam) {
+  return `<div class="card" style="width: 18rem;">
+  <div class="card-body">
+    <h5 class="card-title">${myTeam.getName()}</h5>
+    <h6 class="card-subtitle mb-2 text-muted">${myTeam.getRole()}</h6>
+    <li>EmployeeID: ${myTeam.getId()} </li>
+    <li>Email: <a href="${myTeam.getEmail()}">${myTeam.getEmail()}</a></li>
+    ${myTeam.getRoleSpecificHTML()}
+  </div>
+</div>`
+}
 
-    <!-- Bootstrap CSS -->
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
-    <style>
-    #teamcards { display: flex;
-    flex-direction: row;
-    padding: 20px;
-    justify-content: center;
-    background-color: lightskyblue;}
-
-    header {
-      background-color: navy;
-      color: lightskyblue;
-    }
-    </style>
-
-    <title>Team Profile Generator</title>
-  </head>
-  <body>
-    <header>
-    <div class="p-5 text-center bg-red">
-        <h1 class="mb-3">Team Profile Generator</h1>
-    </div>
-    </header>
-
-    <div class="col-sm-12 text-center" id="teamcards">
-      <!-- Card 1 -->
-      <div class="card" style="width: 18rem;">
-        <div class="card-body">
-          <h5 class="card-title">${answers.name}</h5>
-          <h6 class="card-subtitle mb-2 text-muted">Manager</h6>
-          <p>ID: ${answers.id}</p>
-          <p>Office Number: ${answers.office}</p>
-          <a href="#" class="card-link">Email: ${answers.email}</a>
-        </div>
-      </div>
-      <!-- Card 2 -->
-      <div class="card" style="width: 18rem;">
-        <div class="card-body">
-          <h5 class="card-title">${answers.InternName}</h5>
-          <h6 class="card-subtitle mb-2 text-muted">Intern</h6>
-          <p>ID: ${answers.InternId}</p>
-          <p>Office Number: ${answers.InternOffice}</p>
-          <a href="#" class="card-link">Email: ${answers.InternEmail}</a>
-          <a href="#" class="card-link">School: ${answers.InternSchool}</a>
-        </div>
-      </div>
-      <!-- Card 3 -->
-      <div class="card" style="width: 18rem;">
-        <div class="card-body">
-        <h5 class="card-title">${answers.EngineerName}</h5>
-        <h6 class="card-subtitle mb-2 text-muted">Engineer</h6>
-        <p>ID: ${answers.EngineerId}</p>
-        <p>Office Number: ${answers.EngineerOffice}</p>
-        <a href="#" class="card-link">Email: ${answers.EngineerEmail}</a>
-        <a href="#" class="card-link">Github: ${answers.EngineerGithub}</a>
-        </div>
-      </div>
-      </div> 
-      <!-- jQuery first, then Popper.js, then Bootstrap JS -->
-    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js" integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy" crossorigin="anonymous"></script>
-  </body>
+function generateBottomHTML() {
+  return `</div> 
+  <!-- Optional JavaScript -->
+  <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+  <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js" integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy" crossorigin="anonymous"></script>
+</body>
 </html>`
+}
 
-const init = () => {
-  promptManager()
-    .then ((answers) => addAnother(answers))
-    .then((answers) => writeFileAsync('index.html', generateHTML(answers)))
-    .then(() => console.log('Successfully wrote to index.html'))
-    .catch((err) => console.error(err));
-};
-
-init();
+function generateHTML() {
+  fs.writeFileSync(filePathForHTML, "")
+  let htmlContent = generateStarterHTML();
+  for (var i in myTeam) {
+    console.log(myTeam)
+    htmlContent += generateMyTeamHTML(myTeam[i])
+  }
+  htmlContent += generateBottomHTML();
+  fs.writeFileSync(filePathForHTML, htmlContent)
+}
